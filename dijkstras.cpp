@@ -113,25 +113,14 @@ struct Graph* create_graph(int v, int e){
 //
 // ****************************************************************
 
-
-
-struct DijkstrasHelper{
-  int myNum;
-  int distance;
-};
-
-
-
-// ****************************************************************
-
 // ****************************************************************
 
 
 
 void Dijkstras(Graph* graph);
 
-int GetMin(Graph g, DijkstrasHelper visited[5], int unvisited[5]);
-void UpdateKeys(Graph g, int unvisited[5], DijkstrasHelper visited[5], int value);
+int GetMin(Graph g, int unvisited[5]);
+void UpdateKeys(Graph g, int unvisited[5], int visited[5], int value);
 bool IsAvailable(int unvisited[5], int value);
 
 
@@ -195,30 +184,25 @@ void Dijkstras(Graph* graph){
   Graph g = *graph;
   int V = g.vertices;
   int unvisited[V];
-  DijkstrasHelper visited[V];	// Holds the visited nodes
+  int visited[V];		// Holds the visited nodes
   int lastNode = 0;		// Holds the integer value of the last node visited
   
   // Set up all unvisited nodes's distances to infinity &
   // Set each node's number and the distance to 0
   for(int i = 0; i<V; i++){
     unvisited[i] = INFINITY;
-    visited[i].myNum = i;
-    visited[i].distance = 0;
+    visited[i] = 0;
   }
   
   // Pick starting node 0 and set it's key to 0
   unvisited[0] = 0;
 
 
-  for(int i = 0; i < V-1; i++){  
+  for(int i = 0; i < V; i++){  
     // Get Minimum
-    lastNode = GetMin(g, visited, unvisited);
+    lastNode = GetMin(g, unvisited);
     
-    visited[lastNode].distance = unvisited[lastNode];
-    cout << endl << "Node: " << lastNode << endl;
-    cout << "Unvisisted: " << unvisited[lastNode] << endl
-         << "Dist: " << g.array[lastNode].head->distance << endl;
-    cout << "Visited: " <<  visited[lastNode].distance << endl << endl;
+    visited[lastNode] = unvisited[lastNode];
 
     // Update keys nearby
     UpdateKeys(g, unvisited, visited, lastNode);
@@ -229,8 +213,9 @@ void Dijkstras(Graph* graph){
 
   cout << "Dijkstras:" << endl << endl;
   
+  cout << " Node\tDistance From Source" << endl;
   for(int i = 0; i < V; i++){
-    cout << visited[i].myNum << " - " << visited[i].distance << endl;
+    cout << "  " << i << "\t\t" << visited[i] << endl;
   }
   cout << endl;
 
@@ -248,22 +233,21 @@ void Dijkstras(Graph* graph){
 // Finds the minimum key value in t and returns the node's number
 // Pre: Graph is made and keys are updated
 // Post: Minimum key is found in t. The parent's number is returned
-int GetMin(Graph g, DijkstrasHelper visited[5], int unvisited[5]){
+int GetMin(Graph g, int unvisited[5]){
   int min = -4;
   int parent;
-  int minVal = NINFINITY;
+  int minVal = INFINITY;
   
-  // Get Minimum
+  
+  // Find the minimum value
   for(int i = 0; i < g.vertices; i++){
-    cout << "Checking: " << i << " - " << unvisited[i] << "\n\tCurrent Min: " << min << "\n\tMinVal: " << minVal << endl;
-    if(unvisited[i] > minVal && IsAvailable(unvisited, i) == true){
+    if(unvisited[i] < minVal && IsAvailable(unvisited, i) == true){
       min = i;
-      cout << "Min: " << min << endl;
-      minVal = visited[i].distance;
-      cout << "Updated to: " << minVal << endl << endl;
+      minVal = unvisited[i];
     }
   }
-  return min;
+  
+  return min;  
 }
 
 
@@ -275,7 +259,7 @@ int GetMin(Graph g, DijkstrasHelper visited[5], int unvisited[5]){
 // t is updated with the weights adjacent to node 'value'
 // Pre: Graph is made and the list of available elements (q) is updated
 // Post: Updates t to hold the weights of all adjacent elements to 'value'
-void UpdateKeys(Graph g, int unvisited[5], DijkstrasHelper visited[5], int value){
+void UpdateKeys(Graph g, int unvisited[5], int visited[5], int value){
   Node* temp = new Node;
   int nodeNeeded;
     
@@ -286,17 +270,10 @@ void UpdateKeys(Graph g, int unvisited[5], DijkstrasHelper visited[5], int value
     nodeNeeded = temp->dest;
 
     // Check if a visisted node + adjacent node is a smaller distance than the current distance
-    if((visited[value].distance + temp->distance) < unvisited[nodeNeeded] && IsAvailable(unvisited, temp->dest)){
-      // If so, update the key
-      
-/*      if(unvisited[nodeNeeded] = INFINITY){
-      cout << "if " << value << " to " << nodeNeeded <<": " << unvisited[nodeNeeded] << " to " << temp->distance << endl;
-        visited[nodeNeeded].distance = 0;
-      }*/
-      cout << "Updating " << nodeNeeded << " (" << unvisited[nodeNeeded] << ") to " << visited[value].distance << " + " << temp->distance << endl << endl;
-      unvisited[nodeNeeded] = visited[value].distance+temp->distance;
-      
+    if(visited[value] + temp->distance < unvisited[nodeNeeded]){
+      unvisited[nodeNeeded] = visited[value] + temp->distance;
     }
+
     temp = temp->next;
   }      
 }
@@ -312,14 +289,10 @@ void UpdateKeys(Graph g, int unvisited[5], DijkstrasHelper visited[5], int value
 //	not available
 // Post: Returns whether the specified value is available
 bool IsAvailable(int unvisited[5], int value){
-//  cout << value <<" is available: ";
   if(unvisited[value] != NINFINITY){
-//    cout << "true" << endl;
     return true;
   }
   else {
-//    cout << "false" << endl;
     return false;
   }
-
 }
